@@ -1,4 +1,4 @@
-# MMLS-Timetable-Export
+# MMU-Timetable-Export
 This script eases scheduling of classes from MMU course timetable to a calendar. It exports the calendar into a .ics (iCalendar) file format. The script schedules classes as a recurring weekly event.
 
 Provide the following:
