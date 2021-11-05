@@ -8,3 +8,9 @@ Provide the following:
 4. The date the latest class ends in the trimester
 
 Dates are obtainable from MMU CMS. The script is only able to obtain timetable from MMU Mobile API once the trimester has started.
+
+### Dependencies
+1. aiohttp
+2. iCalendar
+
+Install dependencies with: `pip install -r requirements.txt`
