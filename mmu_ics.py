@@ -157,7 +157,7 @@ def ics_from_timetable(mmumobileapi_timetable: Union[str, io.TextIOBase, MMUMobi
 
         tstop = time.fromisoformat(e['end'])
         dtstop = datetime(dclass.year, dclass.month, dclass.day, tstop.hour, tstop.minute, tzinfo=tzinfo)
-        event.add('dtstop', dtstop) # Event stop datetime
+        event.add('dtend', dtstop) # Event stop datetime
 
         event.add('dtstamp', datetime.now(tz=tzinfo)) # Event-creation timestamp
 
