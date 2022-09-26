@@ -13,7 +13,7 @@ import io
 
 # ALIASES
 
-MMUMobileAPITimetable = List[List[Dict[str, str]]]
+MMUMobileAPITimetable = Dict[int, List[Dict[str, str]]]
 
 # EXCEPTIONS
 
@@ -64,8 +64,9 @@ async def get_timetable_mmumobileapi(student_id: str, password: str,
             if response.status != 200:
                 # Invalid token or token required
                 return []
-            timetable = json.loads(await response.text())
-            if isinstance(timetable, dict):
+            timetable = await response.text()
+            timetable_dict = json.loads(await response.text())
+            if 'error' in timetable_dict.keys():
                 # Invalid student key
                 return []
         async with session.post("https://mmumobileapps.mmu.edu.my/api/logout", params=params) as response:
@@ -74,7 +75,7 @@ async def get_timetable_mmumobileapi(student_id: str, password: str,
 
     return timetable
 
-def ics_from_timetable(mmumobileapi_timetable: Union[str, io.TextIOBase, MMUMobileAPITimetable],
+def ics_from_timetable(mmumobileapi_timetable: dict,
                        date_start: date, date_stop: date) -> io.BytesIO:
     """
     Returns a io.BytesIO object that is a .ics file containing programmatically created class events starting from
@@ -85,36 +86,37 @@ def ics_from_timetable(mmumobileapi_timetable: Union[str, io.TextIOBase, MMUMobi
     date_stop                   cut-off stop date for calendar events creation
 
     mmumobileapi_timetable format:
-    [
-        [
+    {
+        "0": [
             {
-                 "day": "Monday",
-                 "start": "14:00",
-                 "end": "17:00",
-                 "subject_name": "SUBJECT NAME",
-                 "subject_code": "EEE1234",
-                 "type": "LEC",
-                 "venue": "FOEVC0123",
-                 "section": "EC01",
-                 "strm": "2110"
+                "day": "Monday",
+                "start": "09:00",
+                "end": "11:00",
+                "subject_name": "DI & VP",
+                "subject_code": "ECE3296",
+                "type": "LEC",
+                "venue": "CLCR1026",
+                "section": "EC01",
+                "strm": "2210"
             }, ...
-        ], ...
-    ]
+        ],
+        "1": [ ...
+    }
     """
 
     if isinstance(mmumobileapi_timetable, str):
         timetable = json.loads(mmumobileapi_timetable)
     elif isinstance(mmumobileapi_timetable, io.TextIOBase):
         timetable = json.load(mmumobileapi_timetable)
-    elif isinstance(mmumobileapi_timetable, list):
+    elif isinstance(mmumobileapi_timetable, dict):
         timetable = mmumobileapi_timetable
     else:
         raise TypeError(
-            f"'str', 'list', or file-like object expected, not {type(mmumobileapi_timetable)} object."
+            f"'str', 'dict', or file-like object expected, not {type(mmumobileapi_timetable)} object."
         )
 
-    # Flatten timetable events list from a list of list of dict into a list of dict
-    timetable_flattened = (event for day in timetable for event in day)
+    # Flatten timetable events list from a dict of list of dict into a list of dict
+    timetable_flattened = (event for day in timetable.values() for event in day)
 
     # Defaults to case where date_start is on a Monday. Used to offset number of days to obtain a date with a certain
     # day from date_start where offset_date > date_start and offset_date is nearest to date_start.
@@ -167,7 +169,3 @@ def ics_from_timetable(mmumobileapi_timetable: Union[str, io.TextIOBase, MMUMobi
         cal.add_component(event) # Adds event to calendar
 
     return io.BytesIO(cal.to_ical())
-
-
-
-
